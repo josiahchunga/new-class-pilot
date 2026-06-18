@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Smart Reminder Hub | Offline + Real-time Upload Notifications</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding: 1.5rem;
+    }
+
+    /* main component card */
+    .smart-reminder-card {
+      max-width: 640px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(0px);
+      border-radius: 2rem;
+      box-shadow: 0 30px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .reminder-header {
+      background: #0b2b34;
+      padding: 1.5rem 2rem;
+      color: white;
+      background-image: linear-gradient(120deg, #0a2f3a, #0a1c24);
+    }
+
+    .reminder-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .reminder-header h1::before {
+      content: "⏰";
+      font-size: 1.8rem;
+    }
+
+    .badge-offline {
+      background: #ffb34720;
+      backdrop-filter: blur(4px);
+      border-radius: 40px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.7rem;
+      font-weight: 400;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-left: 0.8rem;
+    }
+
+    .reminder-body {
+      padding: 1.8rem 2rem 2rem;
+    }
+
+    /* toggle + status */
+    .toggle-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      background: #f0f6fa;
+      padding: 1rem 1.2rem;
+      border-radius: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 56px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: 0.25s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.25s;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: #2c7da0;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(28px);
+    }
+
+    .info-grid {
+      background: #eef2f7;
+      border-radius: 1.5rem;
+      padding: 1rem 1.3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .next-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+
+    .next-label {
+      font-weight: 700;
+      color: #124559;
+    }
+
+    .next-time {
+      font-family: monospace;
+      font-weight: 700;
+      background: #d4e0ea;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+    }
+
+    .perm-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .perm-badge {
+      background: #cbdbe6;
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .perm-btn {
+      background: #2c7da0;
+      border: none;
+      color: white;
+      padding: 0.3rem 1rem;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    /* upload automation zone */
+    .upload-automation {
+      background: white;
+      border-radius: 1.4rem;
+      padding: 1.2rem;
+      border: 1px solid #cde3ec;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: #0f4c5f;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .dropzone {
+      background: #f9feff;
+      border: 2px dashed #7fbbd3;
+      border-radius: 1.2rem;
+      padding: 1.8rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.8rem;
+    }
+
+    .dropzone:hover {
+      background: #eef9ff;
+      border-color: #2c7da0;
+    }
+
+    .upload-list {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 0.75rem;
+      background: #f8fafc;
+      border-radius: 1rem;
+      padding: 0.5rem;
+    }
+
+    .upload-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid #e2edf2;
+      font-family: monospace;
+    }
+
+    .offline-badge {
+      background: #ffeed9;
+      border-radius: 20px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.6rem;
+      font-weight: bold;
+    }
+
+    .interval-selector {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    select {
+      background: #ecf3f8;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 2rem;
+      font-weight: 500;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+      justify-content: flex-end;
+    }
+
+    .secondary-btn {
+      background: #e2eaf1;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .test-btn {
+      background: #cbdbe6;
+    }
+
+    .footer-note {
+      font-size: 0.65rem;
+      text-align: center;
+      color: #5e7e97;
+      margin-top: 1rem;
+      border-top: 1px solid #e0edf5;
+      padding-top: 1rem;
+    }
+
+    /* snackbar */
+    .snackbar-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      background: #1e293be6;
+      backdrop-filter: blur(12px);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      z-index: 2000;
+      transition: 0.2s;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+      max-width: 90vw;
+      white-space: normal;
+      text-align: center;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); background: #ffe0b5; }
+      100% { transform: scale(1.01); background: #ffe0b5; }
+    }
+  </style>
+  <link rel="stylesheet" href="css/style.css" media="all" />
+</head>
+<body>
+
+<div class="smart-reminder-card" id="appRoot">
+  <div class="reminder-header">
+    <h1>⏳ Hourly Nudge <span class="badge-offline" id="offlineIndicator">🟢 Online</span></h1>
+    <p>Real-time upload detection • offline-ready pushes • hourly reminders</p>
+  </div>
+  <div class="reminder-body">
+    <!-- Master toggle + next reminder info -->
+    <div class="toggle-section">
+      <div><strong>🔔 Hourly Reminder</strong></div>
+      <label class="switch">
+        <input type="checkbox" id="hourlyToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="info-grid">
+      <div class="next-row">
+        <span class="next-label">⏲️ Next reminder:</span>
+        <span class="next-time" id="nextReminderTime">—:— —</span>
+      </div>
+      <div class="perm-section">
+        <span>📢 Notification status:</span>
+        <span id="permStatusText" class="perm-badge">⚠️ Not allowed</span>
+        <button id="requestPermBtn" class="perm-btn">Enable notifications</button>
+      </div>
+    </div>
+
+    <!-- ⚡ AUTOMATION: UPLOAD DETECTION (real-time) -->
+    <div class="upload-automation">
+      <div class="section-title">
+        <span>📤 REAL-TIME UPLOAD MONITOR</span> 
+        <span style="font-size:0.7rem;">(auto-notify on any upload)</span>
+      </div>
+      <div class="dropzone" id="uploadDropzone">
+        📂 Click or drag & drop files here (any file)<br>
+        <span style="font-size:0.7rem;">triggers instant notification + stores offline record</span>
+      </div>
+      <input type="file" id="fileInput" multiple style="display:none;" />
+      <div class="upload-list" id="uploadListContainer">
+        <div style="color:#7799b0; text-align:center; padding:8px;">✨ Uploads appear here & push notifications</div>
+      </div>
+      <div class="interval-selector">
+        <label>🕒 Hourly interval:</label>
+        <select id="hourInterval">
+          <option value="1">Every 1 hour</option>
+          <option value="2">Every 2 hours</option>
+          <option value="3">Every 3 hours</option>
+        </select>
+      </div>
+      <div class="action-buttons">
+        <button id="testNotifBtn" class="secondary-btn test-btn">🔔 Test notification</button>
+        <button id="resetScheduleBtn" class="secondary-btn">⟳ Reset schedule</button>
+      </div>
+    </div>
+    <div class="footer-note">
+      💡 <strong>Offline-capable:</strong> Notifications are queued when offline & delivered instantly when back online.<br>
+      🚀 Any file upload (image, doc, etc) → triggers real-time push + stores log.
+    </div>
+  </div>
+</div>
+
+<div id="globalToast" class="snackbar-toast"></div>
+
+<script>
+  (function() {
+    // ---------- DOM elements ----------
+    const hourlyToggle = document.getElementById('hourlyToggle');
+    const nextReminderSpan = document.getElementById('nextReminderTime');
+    const permStatusSpan = document.getElementById('permStatusText');
+    const requestPermBtn = document.getElementById('requestPermBtn');
+    const testNotifBtn = document.getElementById('testNotifBtn');
+    const resetScheduleBtn = document.getElementById('resetScheduleBtn');
+    const hourIntervalSelect = document.getElementById('hourInterval');
+    const dropzone = document.getElementById('uploadDropzone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadListContainer = document.getElementById('uploadListContainer');
+    const offlineIndicatorSpan = document.getElementById('offlineIndicator');
+
+    // ---------- GLOBALS ----------
+    let isReminderEnabled = false;            // hourly toggle state
+    let currentPermission = Notification.permission;
+    let nextTimeoutId = null;
+    let currentIntervalHours = 1;
+    
+    // ---------- OFFLINE QUEUE SYSTEM (for notifications when offline) ----------
+    let offlineQueue = [];    // store { title, body, timestamp }
+    
+    // Load offline queue from localStorage (persistent offline storage)
+    function loadOfflineQueue() {
+      const stored = localStorage.getItem('hourly_notif_offline_queue');
+      if (stored) {
+        try {
+          offlineQueue = JSON.parse(stored);
+          if (!Array.isArray(offlineQueue)) offlineQueue = [];
+        } catch(e) { offlineQueue = []; }
+      }
+    }
+    
+    function saveOfflineQueue() {
+      localStorage.setItem('hourly_notif_offline_queue', JSON.stringify(offlineQueue));
+    }
+    
+    // Add notification to queue when offline
+    function queueNotification(title, body, isUrgent = true) {
+      offlineQueue.push({ title, body, timestamp: Date.now() });
+      saveOfflineQueue();
+      showFloatingMessage(`📴 Offline mode: notification saved. Will appear when back online.`, false);
+      updateOfflineBadgeStatus();
+    }
+    
+    // process queue when back online
+    async function flushOfflineQueue() {
+      if (currentPermission !== 'granted') {
+        // if no permission, clear queue? keep but cannot send, but we inform user
+        if (offlineQueue.length > 0) {
+          showFloatingMessage(`⚠️ You have ${offlineQueue.length} pending notifications, but permission missing. Grant permission to receive.`, true);
+        }
+        return;
+      }
+      if (offlineQueue.length === 0) return;
+      const queueCopy = [...offlineQueue];
+      offlineQueue = [];
+      saveOfflineQueue();
+      for (const item of queueCopy) {
+        await sendDirectNotification(item.title, item.body);
+        await new Promise(r => setTimeout(r, 300)); // slight delay to avoid spam
+      }
+      showFloatingMessage(`📨 Delivered ${queueCopy.length} offline notification(s) !`, false);
+      updateOfflineBadgeStatus();
+    }
+    
+    // core send notification (handles permission & fallback)
+    function sendDirectNotification(title, body, forceFallback = false) {
+      return new Promise((resolve) => {
+        if (currentPermission !== 'granted') {
+          queueNotification(title, body);
+          resolve(false);
+          return;
+        }
+        try {
+          const notification = new Notification(title, {
+            body: body,
+            icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232c7da0'%3E%3Cpath d='M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.93 6 11v5l-2 2v1h16v-1l-2-2z'/%3E%3C/svg%3E",
+            silent: false,
+            vibrate: [200]
+          });
+          notification.onclick = () => { window.focus(); notification.close(); };
+          setTimeout(() => notification.close(), 7000);
+          resolve(true);
+        } catch(err) {
+          console.warn(err);
+          queueNotification(title, body);
+          resolve(false);
+        }
+      });
+    }
+    
+    // nice floating toast
+    let toastTimeout;
+    function showFloatingMessage(msg, isError = false) {
+      const toast = document.getElementById('globalToast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.backgroundColor = isError ? '#b91c1ce6' : '#1f5e7ae6';
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) scale(1)';
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) scale(0.9)';
+      }, 3000);
+    }
+    
+    // ----- HOURLY SCHEDULER LOGIC (with offline-resilience)-----
+    function computeNextTriggerMs(intervalHours) {
+      const now = new Date();
+      let nextDate = new Date(now);
+      nextDate.setSeconds(0);
+      nextDate.setMilliseconds(0);
+      nextDate.setMinutes(0);
+      let targetHour = nextDate.getHours();
+      const findNextValidHour = (baseHour, step) => {
+        let hoursAdded = 0;
+        while (true) {
+          let checkHour = (baseHour + hoursAdded) % 24;
+          if (checkHour % step === 0) return hoursAdded;
+          hoursAdded++;
+        }
+      };
+      let addHours = findNextValidHour(targetHour, intervalHours);
+      if (addHours === 0 && (now.getMinutes() > 0 || now.getSeconds() > 0)) {
+        addHours = intervalHours;
+      }
+      if (addHours === 0 && now.getTime() >= nextDate.getTime()) {
+        addHours = intervalHours;
+      }
+      nextDate.setHours(targetHour + addHours);
+      if (nextDate.getHours() >= 24) {
+        nextDate.setDate(nextDate.getDate() + 1);
+        nextDate.setHours(nextDate.getHours() % 24);
+      }
+      nextDate.setMinutes(0);
+      nextDate.setSeconds(0);
+      if (nextDate.getTime() <= now.getTime()) {
+        nextDate.setTime(nextDate.getTime() + intervalHours * 60 * 60 * 1000);
+        nextDate.setMinutes(0);
+      }
+      return nextDate.getTime();
+    }
+    
+    function clearReminderTimeout() {
+      if (nextTimeoutId) {
+        clearTimeout(nextTimeoutId);
+        nextTimeoutId = null;
+      }
+    }
+    
+    async function triggerHourlyReminder() {
+      if (!isReminderEnabled || currentPermission !== 'granted') {
+        // If disabled or no permission, just schedule next (don't send)
+        scheduleNextReminder();
+        return;
+      }
+      const msgBody = currentIntervalHours === 1 ? "Take a deep breath & stretch! ☕" :
+                     (currentIntervalHours === 2 ? "Time flies! Two hours passed — hydrate & refocus. 💧" : "Three-hour check: review progress, recharge. 🌟");
+      await sendDirectNotification("⏰ Hourly Reminder", msgBody);
+      scheduleNextReminder();
+    }
+    
+    function scheduleNextReminder() {
+      clearReminderTimeout();
+      if (!isReminderEnabled || currentPermission !== 'granted') {
+        updateNextDisplay();
+        return;
+      }
+      const nextMs = computeNextTriggerMs(currentIntervalHours);
+      const delay = Math.max(0, nextMs - Date.now());
+      nextTimeoutId = setTimeout(() => {
+        triggerHourlyReminder();
+      }, delay);
+      updateNextDisplay();
+    }
+    
+    function updateNextDisplay() {
+      if (!isReminderEnabled || currentPermission !== 'granted') {
+        if (!isReminderEnabled) nextReminderSpan.innerText = '⏸️ Reminder OFF';
+        else if (currentPermission !== 'granted') nextReminderSpan.innerText = '🔇 Permission missing';
+        else nextReminderSpan.innerText = '—:—';
+        return;
+      }
+      const nextTimestamp = computeNextTriggerMs(currentIntervalHours);
+      const nextDate = new Date(nextTimestamp);
+      nextReminderSpan.innerText = nextDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+    
+    function refreshHourlySystem() {
+      if (isReminderEnabled && currentPermission === 'granted') {
+        scheduleNextReminder();
+      } else {
+        clearReminderTimeout();
+        updateNextDisplay();
+      }
+    }
+    
+    // ---------- UPLOAD AUTOMATION: detect any file upload in real time (drag & drop or click) ----------
+    function handleFiles(fileList) {
+      if (!fileList || fileList.length === 0) return;
+      const filesArray = Array.from(fileList);
+      // show in UI
+      for (let file of filesArray) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'upload-item';
+        const sizeKB = (file.size / 1024).toFixed(1);
+        fileItem.innerHTML = `<span>📄 ${file.name}</span><span>${sizeKB} KB</span>`;
+        uploadListContainer.prepend(fileItem);
+        if (uploadListContainer.children.length > 8) uploadListContainer.removeChild(uploadListContainer.lastChild);
+        
+        // REAL-TIME NOTIFICATION: push instantly (respect offline queue)
+        const uploadMsg = `Uploaded: ${file.name} (${sizeKB} KB)`;
+        sendDirectNotification("📂 Real-time Upload Alert", uploadMsg);
+        showFloatingMessage(`⚡ Upload detected: ${file.name} — notification triggered`, false);
+      }
+    }
+    
+    function openFileDialog() {
+      fileInput.click();
+    }
+    
+    // drag & drop events
+    function setupUploadAutomation() {
+      dropzone.addEventListener('click', openFileDialog);
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length) handleFiles(fileInput.files);
+        fileInput.value = ''; // reset
+      });
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.style.background = '#e0f0fa';
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.style.background = '#f9feff';
+      });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.background = '#f9feff';
+        const dt = e.dataTransfer;
+        if (dt.files && dt.files.length) {
+          handleFiles(dt.files);
+        }
+      });
+    }
+    
+    // Permission handling
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        showFloatingMessage("Browser does not support notifications", true);
+        return false;
+      }
+      if (currentPermission === 'granted') return true;
+      if (currentPermission === 'denied') {
+        showFloatingMessage("Notifications blocked. Change site settings.", true);
+        return false;
+      }
+      try {
+        const result = await Notification.requestPermission();
+        currentPermission = re
